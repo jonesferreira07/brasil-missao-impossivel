@@ -111,8 +111,9 @@ export function FinalNote() {
         direta de gerar emprego.
       </p>
       <p>
-        E hoje, quem mais se beneficia desse modelo? <b>Grandes empresas com isenções fiscais bilionárias, bancos com juros altíssimos e quem
-        vive de renda</b>. Quem precisa de crédito — o pequeno empresário, o trabalhador, a família endividada — paga a conta duas vezes: no
+        E hoje, quem mais se beneficia desse modelo? <b>Grandes empresas com isenções fiscais bilionárias e perdões bilionários de dívidas (os Refis),
+        bancos com juros altíssimos e quem vive de renda</b>. Só em dez anos (2008–2017), o país perdoou R$ 176 bilhões em juros e multas
+        de devedores do Fisco — e quem paga em dia aprende que pagar em dia não compensa. Quem precisa de crédito — o pequeno empresário, o trabalhador, a família endividada — paga a conta duas vezes: no
         imposto e nos juros. Um país que premia quem empresta e pune quem produz não sai do lugar.
       </p>
       <p>

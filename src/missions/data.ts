@@ -180,6 +180,7 @@ export const MISSIONS: Mission[] = [
     ],
     question: 'Qual botão da Máquina de Impostos o presidente aperta?',
     options: [
+
       {
         id: 'A',
         title: 'Aumentar impostos sobre consumo',
@@ -251,6 +252,24 @@ export const MISSIONS: Mission[] = [
           },
           messages: ['Ninguém gostou. Isso, em economia, costuma ser um bom sinal.'],
           headline: 'AJUSTE MISTO AGRADA A NINGUÉM E CONVENCE OS NÚMEROS',
+        }),
+      },
+      {
+        id: 'F',
+        title: 'Novo Refis: perdão bilionário a grandes devedores',
+        desc: 'Perdoar juros e multas de grandes empresas que devem ao Fisco, em troca de um pagamento adiantado. Quem pagou em dia não ganha nada.',
+        hint: 'Caixa ↑ agora · Sonegação ↑ depois · Credibilidade ↓ · Pequeno empresário se sente bobo',
+        resolve: () => ({
+          delta: { ind: { popularity: -2 }, lev: { spending: -0.35, credibility: -4, efficiency: -0.4 } },
+          delayed: [
+            later(9, 'Ressaca do Refis', { lev: { spending: 0.35, efficiency: -0.6, credibility: -2 } }, 'O dinheiro do Refis acabou, e os grandes devedores voltaram a atrasar: todo mundo já espera o próximo perdão.'),
+          ],
+          messages: [
+            'O caixa recebeu um adiantamento. Os juros e multas perdoados foram embora para sempre.',
+            'Dado real: em dez anos (2008–2017), o Brasil perdoou R$ 176 bilhões em juros e multas em nove programas de parcelamento (Refis).',
+            'Seu Arlindo, da oficina, pagou tudo em dia. Agora se pergunta por quê.',
+          ],
+          headline: 'GOVERNO LANÇA NOVO REFIS; GRANDES DEVEDORES COMEMORAM, QUEM PAGA EM DIA NÃO',
         }),
       },
     ],
@@ -1260,7 +1279,8 @@ export const ELECTION_MISSION: Mission = {
       lines: (e) => [
         'Presidente, tenho uma oficina com seis funcionários. Quem gera emprego neste país é gente como eu.',
         `Carga tributária em ${e.ind.taxBurden.toFixed(1).replace('.', ',')}% do PIB. Eu passo mais tempo com o contador do que com os carros.`,
-        'Enquanto isso, leio no jornal sobre supersalário e penduricalho. Assim não dá para acreditar que falta dinheiro — falta é gastar direito.',
+        'Enquanto isso, leio no jornal sobre supersalário, penduricalho e Refis perdoando bilhões de grandes devedores. Eu pago em dia; eles esperam o próximo perdão.',
+        'Assim não dá para acreditar que falta dinheiro — falta é gastar direito e cobrar de quem deve.',
         'Me convença no debate.',
       ],
       label: 'Conversar com Seu Arlindo',

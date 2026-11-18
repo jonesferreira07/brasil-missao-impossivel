@@ -599,6 +599,18 @@ function Realidade() {
         </mesh>
       ))}
       <Sign lines={['OBRA DE SANEAMENTO', 'Início: 2009 · Previsão: em breve', 'Valor gasto até agora: R$ 48 milhões']} w={5} h={1.8} pos={[P.placaObra[0], 2.4, P.placaObra[1] - 1.5]} rot={0} bg="#f2c230" fg="#14213d" emissive={0.2} mount="posts" res={[1024, 360]} />
+      <Sign
+        lines={['DADO REAL — PERDÕES (REFIS)', 'R$ 176 bi em juros e multas perdoados em 10 anos (2008–2017)', '0,4% das empresas concentram 62% da dívida com a União (PGFN)']}
+        w={4.8}
+        h={1.9}
+        pos={[36, 2.1, -47]}
+        rot={-Math.PI / 2}
+        bg="#0b1d2e"
+        fg="#fff"
+        emissive={0.35}
+        mount="posts"
+        res={[1024, 400]}
+      />
       <Sign lines={['DADO REAL (Brasil, 2024)', '~90 milhões de pessoas (43,3%) sem coleta de esgoto', '~33 milhões sem água potável · Fonte: Sinisa/Trata Brasil']} w={6} h={1.9} pos={[-58, 2.3, 194.5]} bg="#0b1d2e" fg="#ffffff" emissive={0.35} mount="posts" res={[1024, 330]} />
       <Sign lines={['DADO REAL (PISA 2022)', '73% dos alunos abaixo do nível básico em matemática', 'Média da OCDE: 31% · Fonte: OCDE/Inep']} w={6} h={1.9} pos={[-44, 2.3, 127]} bg="#0b1d2e" fg="#ffffff" emissive={0.35} mount="posts" res={[1024, 330]} />
       <Sign lines={['DADO REAL (SUS)', 'Recorde de cirurgias eletivas — e mesmo assim há fila', 'A fila não é unificada: não há número oficial exato']} w={6} h={1.9} pos={[45, 2.3, 125]} bg="#0b1d2e" fg="#ffffff" emissive={0.35} mount="posts" res={[1024, 330]} />

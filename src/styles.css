@@ -384,3 +384,17 @@ html.touch body:has(.radio) .notifs { top: 196px; }
   html.touch .prompt { bottom: 300px; }
   html.touch .dialogue { bottom: 300px; }
 }
+
+/* ---------------- Minimapa: tocar para ampliar ---------------- */
+.minimap { cursor: pointer; pointer-events: auto; transition: width .2s, height .2s; }
+.minimap.big { position: absolute; top: 50%; left: 50%; right: auto; transform: translate(-50%, -50%); width: min(86vw, 82vh); height: min(86vw, 82vh); z-index: 8; border-width: 4px; }
+.map-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.45); z-index: 7; }
+.map-hint { position: absolute; bottom: 10%; left: 0; right: 0; text-align: center; font-size: 12px; font-weight: 800; text-shadow: 0 1px 3px #000; pointer-events: none; }
+html.touch .minimap { width: 136px; height: 136px; }
+html.touch .minimap.big { top: 50%; right: auto; width: min(88vw, 80vh); height: min(88vw, 80vh); }
+html.touch .mini-econ { top: 152px; }
+@media (max-height: 520px) { html.touch .minimap { width: 120px; height: 120px; } html.touch .mini-econ { top: 8px; right: 136px; } html.touch .ttop { right: 284px; } }
+
+.minimap.big, html.touch .minimap.big { z-index: 30; }
+.map-backdrop { z-index: 29; }
+.map-hint { bottom: auto; top: 12%; }

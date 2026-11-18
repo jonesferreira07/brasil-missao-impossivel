@@ -207,6 +207,7 @@ for (const px of [-156, -150, -144]) box(px, 44, 1, 0.7); // bombas
 for (const [cx, cz] of [[-161, 35], [-139, 35], [-161, 49], [-139, 49]]) box(cx, cz, 0.6, 0.6); // colunas do posto
 box(36, -52.4, 0.3, 0.3); // postes do impostômetro
 box(36, -57.6, 0.3, 0.3);
+box(36, -47, 0.4, 4.8); // placa dos perdões (Refis)
 box(-86, 193.5, 5, 0.4); // placa da obra
 box(-58, 194.5, 6, 0.4);
 box(-44, 127, 6, 0.4);

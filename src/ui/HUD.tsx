@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { brl, fuelPrices, IND_META, IND_ORDER, monthLabel, type IndKey } from '../economy/model';
+import { IS_TOUCH } from '../game/device';
 import { runtime } from '../game/runtime';
 import { useGame } from '../game/store';
 import { MISSIONS } from '../missions/data';
@@ -157,7 +158,14 @@ function getStaticMap() {
   g.fillRect(0, 0, S, S);
   g.fillStyle = '#6f9a4e';
   g.fillRect(X(-21), X(-133), 42 * MAP_PX, 226 * MAP_PX);
-  g.fillStyle = '#3a3d42';
+  g.fillStyle = '#d8d4c8';
+  for (const r of ROADS) {
+    const horiz = r.z1 === r.z2;
+    const e = 1.5;
+    if (horiz) g.fillRect(X(Math.min(r.x1, r.x2)), X(r.z1 - r.w / 2 - e), Math.abs(r.x2 - r.x1) * MAP_PX, (r.w + e * 2) * MAP_PX);
+    else g.fillRect(X(r.x1 - r.w / 2 - e), X(Math.min(r.z1, r.z2)), (r.w + e * 2) * MAP_PX, Math.abs(r.z2 - r.z1) * MAP_PX);
+  }
+  g.fillStyle = '#34373c';
   for (const r of ROADS) {
     const horiz = r.z1 === r.z2;
     if (horiz) g.fillRect(X(Math.min(r.x1, r.x2)), X(r.z1 - r.w / 2), Math.abs(r.x2 - r.x1) * MAP_PX, r.w * MAP_PX);
@@ -185,8 +193,29 @@ function getStaticMap() {
   return c;
 }
 
+const MAP_LABELS: [string, number, number][] = [
+  ['Planalto', 70, -160],
+  ['Congresso', 0, -162],
+  ['Supremo', -50, -161],
+  ['Base Aérea', 160, -180],
+  ['Supermercado', 161, 41],
+  ['Posto', -150, 40],
+  ['Tesouro', 48, -35],
+  ['Banco Central', 80, -100],
+  ['Quartel', 155, -28],
+  ['Escola', -30, 140],
+  ['UPA', 30, 135],
+  ['Comércio', 110, 112],
+  ['Bairro', -118, 150],
+  ['Indústria', -125, -110],
+  ['Esplanada', 0, -40],
+];
+
 function Minimap() {
   const ref = useRef<HTMLCanvasElement>(null);
+  const [big, setBig] = useState(false);
+  const bigRef = useRef(false);
+  bigRef.current = big;
   useEffect(() => {
     let raf = 0;
     const draw = () => {
@@ -195,52 +224,98 @@ function Minimap() {
       if (!c) return;
       const g = c.getContext('2d')!;
       const W = c.width;
-      const scale = 1.35; // px do canvas por unidade do mundo
+      const css = c.clientWidth || 200;
+      const k = (W / css) * 0.75; // tamanhos em pixels de tela (iguais no PC, no celular e no mapa ampliado)
+      const fk = W / css; // fonte em px de tela
+      const isBig = bigRef.current;
+      const scale = isBig ? 1.25 : IS_TOUCH ? 2.6 : 2.0; // px do canvas por metro
       const v = runtime.vehicle ? runtime.vehicles.find((x) => x.id === runtime.vehicle) : null;
       const px = v ? v.x : runtime.player.x;
       const pz = v ? v.z : runtime.player.z;
-      const yaw = v ? v.yaw : runtime.player.yaw;
-      g.fillStyle = '#2b3a2b';
+      const pyaw = v ? v.yaw : runtime.player.yaw;
+      const rot = runtime.cam.yaw; // mapa gira com a câmera: "para cima" = para onde a câmera olha
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.fillStyle = '#25331f';
       g.fillRect(0, 0, W, W);
+      // mundo rotacionado
+      g.save();
+      g.translate(W / 2, W / 2);
+      g.rotate(rot);
       const sm = getStaticMap();
-      const k = scale / MAP_PX;
-      g.drawImage(sm, W / 2 - (px + WORLD) * scale, W / 2 - (pz + WORLD) * scale, sm.width * k, sm.height * k);
-      const toC = (x: number, z: number) => [W / 2 + (x - px) * scale, W / 2 + (z - pz) * scale];
-      // veículos
+      const kk = scale / MAP_PX;
+      g.drawImage(sm, -(px + WORLD) * scale, -(pz + WORLD) * scale, sm.width * kk, sm.height * kk);
+      const P2 = (x: number, z: number) => [(x - px) * scale, (z - pz) * scale];
+      // carros dirigíveis
       for (const car of runtime.vehicles) {
         if (car.id === runtime.vehicle) continue;
-        const [cx, cy] = toC(car.x, car.z);
+        const [cx, cy] = P2(car.x, car.z);
         g.fillStyle = '#4cc9f0';
-        g.fillRect(cx - 4, cy - 4, 8, 8);
+        g.strokeStyle = '#000';
+        g.lineWidth = 2 * k;
+        g.beginPath();
+        g.arc(cx, cy, 6 * k, 0, Math.PI * 2);
+        g.fill();
+        g.stroke();
       }
-      // alvo da missão
+      // nomes dos lugares (sempre de pé)
+      g.font = `700 ${Math.round((isBig ? 12 : 9.5) * fk)}px Inter, Arial, sans-serif`;
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      for (const [name, x, z] of MAP_LABELS) {
+        const [lx, ly] = P2(x, z);
+        if (Math.hypot(lx, ly) > W * 0.72) continue;
+        g.save();
+        g.translate(lx, ly);
+        g.rotate(-rot);
+        g.lineWidth = 3 * fk;
+        g.strokeStyle = 'rgba(0,0,0,.75)';
+        g.strokeText(name, 0, 0);
+        g.fillStyle = '#ffffff';
+        g.fillText(name, 0, 0);
+        g.restore();
+      }
+      g.restore();
+
+      // objetivo: linha tracejada + estrela (ou seta na borda) + distância
       const s = useGame.getState();
       const st = MISSIONS[s.missionIndex]?.steps[s.stepIndex];
+      const R = W / 2 - 14 * k;
       if (st) {
-        let [tx, ty] = toC(st.target[0], st.target[1]);
-        const dx = tx - W / 2;
-        const dy = ty - W / 2;
-        const d = Math.hypot(dx, dy);
-        const R = W / 2 - 16;
+        const dxw = (st.target[0] - px) * scale;
+        const dyw = (st.target[1] - pz) * scale;
+        const cr = Math.cos(rot);
+        const sr = Math.sin(rot);
+        let tx = dxw * cr - dyw * sr;
+        let ty = dxw * sr + dyw * cr;
+        const d = Math.hypot(tx, ty);
         const edge = d > R;
         if (edge) {
-          tx = W / 2 + (dx / d) * R;
-          ty = W / 2 + (dy / d) * R;
+          tx = (tx / d) * R;
+          ty = (ty / d) * R;
         }
         g.save();
+        g.translate(W / 2, W / 2);
+        g.setLineDash([8 * k, 6 * k]);
+        g.strokeStyle = 'rgba(255,214,10,.9)';
+        g.lineWidth = 3 * k;
+        g.beginPath();
+        g.moveTo(0, 0);
+        g.lineTo(tx, ty);
+        g.stroke();
+        g.setLineDash([]);
         g.translate(tx, ty);
-        if (edge) g.rotate(Math.atan2(dy, dx) + Math.PI / 2);
         g.fillStyle = '#ffd60a';
         g.strokeStyle = '#000';
-        g.lineWidth = 2;
+        g.lineWidth = 2.5 * k;
         g.beginPath();
         if (edge) {
-          g.moveTo(0, -12);
-          g.lineTo(9, 8);
-          g.lineTo(-9, 8);
+          g.rotate(Math.atan2(ty, tx) + Math.PI / 2);
+          g.moveTo(0, -13 * k);
+          g.lineTo(10 * k, 9 * k);
+          g.lineTo(-10 * k, 9 * k);
         } else {
           for (let i = 0; i < 10; i++) {
-            const r = i % 2 ? 5 : 12;
+            const r = (i % 2 ? 6 : 14) * k;
             const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
             g.lineTo(Math.cos(a) * r, Math.sin(a) * r);
           }
@@ -249,36 +324,57 @@ function Minimap() {
         g.fill();
         g.stroke();
         g.restore();
+        // distância
+        const meters = Math.round(Math.hypot(st.target[0] - px, st.target[1] - pz));
+        const label = meters > 999 ? `${(meters / 1000).toFixed(1).replace('.', ',')} km` : `${meters} m`;
+        g.font = `800 ${Math.round((isBig ? 15 : 11) * fk)}px Inter, Arial, sans-serif`;
+        g.textAlign = 'center';
+        g.lineWidth = 4 * k;
+        g.strokeStyle = 'rgba(0,0,0,.85)';
+        g.strokeText(`★ ${label}`, W / 2, 30 * fk);
+        g.fillStyle = '#ffd60a';
+        g.fillText(`★ ${label}`, W / 2, 30 * fk);
       }
-      // jogador
+
+      // jogador (seta) no centro
       g.save();
       g.translate(W / 2, W / 2);
-      g.rotate(-yaw + Math.PI);
-      g.fillStyle = '#fff';
-      g.strokeStyle = '#000';
-      g.lineWidth = 2;
+      g.rotate(rot - pyaw + Math.PI);
+      g.fillStyle = '#ffffff';
+      g.strokeStyle = '#d62828';
+      g.lineWidth = 3 * k;
       g.beginPath();
-      g.moveTo(0, -11);
-      g.lineTo(8, 9);
-      g.lineTo(0, 4);
-      g.lineTo(-8, 9);
+      g.moveTo(0, -15 * k);
+      g.lineTo(11 * k, 12 * k);
+      g.lineTo(0, 6 * k);
+      g.lineTo(-11 * k, 12 * k);
       g.closePath();
       g.fill();
       g.stroke();
       g.restore();
-      // N
+
+      // Norte (gira junto)
+      const nx = W / 2 + Math.sin(rot) * (W / 2 - 16 * k);
+      const ny = W / 2 - Math.cos(rot) * (W / 2 - 16 * k);
+      g.beginPath();
+      g.fillStyle = '#c1121f';
+      g.arc(nx, ny, 11 * k, 0, Math.PI * 2);
+      g.fill();
       g.fillStyle = '#fff';
-      g.font = 'bold 20px sans-serif';
+      g.font = `900 ${Math.round(13 * k)}px Inter, Arial, sans-serif`;
       g.textAlign = 'center';
-      g.fillText('N', W / 2, 24);
+      g.textBaseline = 'middle';
+      g.fillText('N', nx, ny + 1);
     };
     draw();
     return () => cancelAnimationFrame(raf);
   }, []);
   return (
     <>
-      <div className="minimap passive">
-        <canvas ref={ref} width={400} height={400} />
+      {big && <div className="map-backdrop" onClick={() => setBig(false)} />}
+      <div className={`minimap ${big ? 'big' : ''}`} onClick={() => setBig((b) => !b)} title="Toque para ampliar">
+        <canvas ref={ref} width={big ? 720 : 400} height={big ? 720 : 400} />
+        {big && <div className="map-hint">Toque para fechar · ★ objetivo · ● carros</div>}
       </div>
     </>
   );
