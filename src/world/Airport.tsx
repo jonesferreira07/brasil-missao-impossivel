@@ -1,0 +1,368 @@
+import { useFrame, useThree } from '@react-three/fiber';
+import { forwardRef, useMemo, useRef } from 'react';
+import * as THREE from 'three';
+import { runtime } from '../game/runtime';
+import { useGame } from '../game/store';
+import { Sign } from './Landmarks';
+import { AIRPORT } from './layout';
+import { Person, SimplePerson, type AnimState } from './Person';
+import { useStaticObstacles } from './useObstacles';
+
+// ------------------------------------------------------------ Avião presidencial (fictício)
+/** Nariz aponta para +z local. Altura do piso da porta ≈ 2,6. */
+const Plane = forwardRef<THREE.Group, { stairs: number }>(function Plane({ stairs }, ref) {
+  const livery = useMemo(() => new THREE.MeshStandardMaterial({ color: '#f4f4f2', metalness: 0.3, roughness: 0.35 }), []);
+  return (
+    <group ref={ref}>
+      <group position={[0, 3.2, 0]}>
+        <mesh rotation={[Math.PI / 2, 0, 0]} castShadow material={livery}>
+          <cylinderGeometry args={[2, 2, 26, 20]} />
+        </mesh>
+        <mesh position={[0, 0, 13]} scale={[1, 1, 1.6]} castShadow material={livery}>
+          <sphereGeometry args={[2, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        </mesh>
+        <mesh position={[0, 0.6, 14.5]} rotation={[-0.5, 0, 0]}>
+          <boxGeometry args={[1.8, 0.5, 0.8]} />
+          <meshStandardMaterial color="#1b2a3a" metalness={0.6} roughness={0.2} />
+        </mesh>
+        <mesh position={[0, 0.5, -15]} rotation={[-Math.PI / 2 - 0.15, 0, 0]} castShadow material={livery}>
+          <coneGeometry args={[2, 6, 20]} />
+        </mesh>
+        {/* faixa verde e amarela */}
+        {[-1, 1].map((sx) => (
+          <group key={sx}>
+            <mesh position={[sx * 2.01, -0.3, 0]} rotation={[0, (sx * Math.PI) / 2, 0]}>
+              <planeGeometry args={[27, 0.35]} />
+              <meshStandardMaterial color="#1f9d55" />
+            </mesh>
+            <mesh position={[sx * 2.01, -0.62, 0]} rotation={[0, (sx * Math.PI) / 2, 0]}>
+              <planeGeometry args={[27, 0.2]} />
+              <meshStandardMaterial color="#f2c230" />
+            </mesh>
+            <mesh position={[sx * 2.01, 0.55, 0]} rotation={[0, (sx * Math.PI) / 2, 0]}>
+              <planeGeometry args={[22, 0.32]} />
+              <meshStandardMaterial color="#1b2a3a" />
+            </mesh>
+          </group>
+        ))}
+        <Sign lines={['REPÚBLICA FICTÍCIA DO BRASIL']} w={12} h={0.9} pos={[2.03, 1.25, -2]} rot={Math.PI / 2} bg="#f4f4f2" fg="#1f2a44" emissive={0.05} res={[1024, 80]} />
+        {/* porta (lado direito do avião = +x local) */}
+        <mesh position={[2.02, -0.1, 9]} rotation={[0, Math.PI / 2, 0]}>
+          <planeGeometry args={[1.1, 2]} />
+          <meshStandardMaterial color={stairs > 0.5 ? '#101010' : '#d9d9d6'} />
+        </mesh>
+      </group>
+      {/* asas e cauda */}
+      <mesh position={[0, 2.3, 0]} castShadow material={livery}>
+        <boxGeometry args={[26, 0.35, 5]} />
+      </mesh>
+      {[-6, 6].map((ex) => (
+        <mesh key={ex} position={[ex, 1.6, 0.8]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+          <cylinderGeometry args={[0.75, 0.75, 3.2, 14]} />
+          <meshStandardMaterial color="#9aa3ad" metalness={0.6} roughness={0.3} />
+        </mesh>
+      ))}
+      <mesh position={[0, 7.4, -15.5]} castShadow material={livery}>
+        <boxGeometry args={[0.3, 4.6, 3.6]} />
+      </mesh>
+      <mesh position={[0, 7.6, -15.5]}>
+        <boxGeometry args={[0.32, 1.4, 3.6]} />
+        <meshStandardMaterial color="#1f9d55" />
+      </mesh>
+      <mesh position={[0, 5.4, -16]} material={livery}>
+        <boxGeometry args={[9, 0.25, 2.4]} />
+      </mesh>
+      {/* trem de pouso */}
+      {[
+        [0, 9],
+        [-2.4, -1],
+        [2.4, -1],
+      ].map(([gx, gz], i) => (
+        <mesh key={i} position={[gx, 0.6, gz]} rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.6, 0.6, 0.5, 12]} />
+          <meshStandardMaterial color="#111" />
+        </mesh>
+      ))}
+      {/* escada */}
+      {stairs > 0 && (
+        <group position={[2.1 + 2 * stairs, 0, 9]}>
+          <mesh position={[0, 1.3, 0]} rotation={[0, 0, -0.55]} castShadow>
+            <boxGeometry args={[4.6, 0.25, 1.4]} />
+            <meshStandardMaterial color="#e8e8e8" />
+          </mesh>
+          <mesh position={[0.2, 0.6, 0]}>
+            <boxGeometry args={[3, 1.2, 1.2]} />
+            <meshStandardMaterial color="#2f6db5" />
+          </mesh>
+        </group>
+      )}
+    </group>
+  );
+});
+
+// ------------------------------------------------------------ Primeira-Dama (fictícia) com sacolas
+function ShoppingBags() {
+  const colors = ['#e63946', '#f4a261', '#2a9d8f', '#ff70a6', '#ffd166', '#8338ec', '#06d6a0'];
+  return (
+    <group>
+      {colors.map((c, i) => (
+        <mesh key={i} position={[(i % 2 ? 0.55 : -0.55) + (i > 3 ? (i % 2 ? 0.25 : -0.25) : 0), 0.75 - (i % 3) * 0.12, 0.05 + (i % 3) * 0.12]} castShadow>
+          <boxGeometry args={[0.38, 0.5, 0.16]} />
+          <meshStandardMaterial color={c} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+export const FirstLady = forwardRef<THREE.Group, { anim?: React.MutableRefObject<AnimState> }>(function FirstLady({ anim }, ref) {
+  return (
+    <group ref={ref}>
+      <Person shirt="#c9184a" pants="#590d22" skin="#e8b98f" hair="#b08968" anim={anim} />
+      {/* óculos escuros */}
+      <mesh position={[0, 2.06, 0.23]}>
+        <boxGeometry args={[0.36, 0.08, 0.02]} />
+        <meshBasicMaterial color="#000" />
+      </mesh>
+      <ShoppingBags />
+    </group>
+  );
+});
+
+// ------------------------------------------------------------ Base aérea
+export function Airport() {
+  const screen = useGame((s) => s.screen);
+  const { runwayX1, runwayX2, runwayZ, terminal } = AIRPORT;
+  const marks = useMemo(() => Array.from({ length: 9 }, (_, i) => runwayX1 + 6 + i * 9.5), [runwayX1]);
+  useStaticObstacles([
+    [139, -164.2, 0.45],
+    [134, -160, 0.4],
+    [135.5, -159, 0.4],
+    [133, -158.5, 0.4],
+  ]);
+  return (
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[(runwayX1 + runwayX2) / 2, 0.03, runwayZ]} receiveShadow>
+        <planeGeometry args={[runwayX2 - runwayX1, 16]} />
+        <meshStandardMaterial color="#3a3c40" />
+      </mesh>
+      {marks.map((x) => (
+        <mesh key={x} rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.045, runwayZ]}>
+          <planeGeometry args={[5, 0.5]} />
+          <meshBasicMaterial color="#f1f1f1" />
+        </mesh>
+      ))}
+      {/* pátio até a rua */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[140, 0.025, -155]} receiveShadow>
+        <planeGeometry args={[40, 30]} />
+        <meshStandardMaterial color="#8b8b85" />
+      </mesh>
+      {/* tapete vermelho */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[141, 0.05, -166]}>
+        <planeGeometry args={[1.6, 6]} />
+        <meshStandardMaterial color="#b3001b" />
+      </mesh>
+      {/* terminal */}
+      <mesh position={[terminal.x, 3, terminal.z]} castShadow receiveShadow>
+        <boxGeometry args={[terminal.w, 6, terminal.d]} />
+        <meshStandardMaterial color="#d9d4c7" />
+      </mesh>
+      <mesh position={[terminal.x, 2.4, terminal.z + terminal.d / 2 + 0.02]}>
+        <planeGeometry args={[terminal.w - 2, 3]} />
+        <meshStandardMaterial color="#4f6d7a" metalness={0.5} roughness={0.2} />
+      </mesh>
+      <Sign lines={['BASE AÉREA DE BRASÍLIA (FICTÍCIA)']} w={12} h={1} pos={[terminal.x, 5.3, terminal.z - terminal.d / 2 - 0.03]} rot={Math.PI} bg="#0d3b66" fg="#fff" emissive={0.3} res={[1024, 96]} />
+      <Sign lines={['BEM-VINDO DE VOLTA, PRESIDENTE!', '47ª viagem internacional do ano']} w={6} h={1.4} pos={[134, 2.6, -162]} rot={Math.PI / 2} bg="#f2c230" fg="#0b1d2e" emissive={0.3} mount="posts" />
+      {/* jornalistas */}
+      {[
+        [134, -160],
+        [135.5, -159],
+        [133, -158.5],
+      ].map(([x, z], i) => (
+        <group key={i}>
+          <SimplePerson position={[x, 0, z]} rotation={Math.PI / 2 + 0.3} shirt={['#333', '#5c677d', '#7d8597'][i]} />
+          <mesh position={[x + 0.4, 1.9, z + 0.15]}>
+            <boxGeometry args={[0.35, 0.3, 0.5]} />
+            <meshStandardMaterial color="#111" />
+          </mesh>
+        </group>
+      ))}
+      {screen !== 'intro' && (
+        <>
+          <group position={[AIRPORT.planeX, 0, AIRPORT.planeZ]} rotation={[0, -Math.PI / 2, 0]}>
+            <Plane stairs={1} />
+          </group>
+          <group position={[139, 0, -164.2]} rotation={[0, 0.6, 0]}>
+            <FirstLady />
+          </group>
+        </>
+      )}
+    </group>
+  );
+}
+
+// ------------------------------------------------------------ Cena de abertura
+export const INTRO_LENGTH = 26;
+const LINES: [number, string, string][] = [
+  [0, '', 'Ano 203X. O Brasil enfrenta a pior crise da sua história (fictícia).'],
+  [4.5, '', 'Enquanto o país aperta o cinto, o Presidente volta de mais uma viagem à Europa — a 47ª do ano.'],
+  [10, '', 'Base Aérea de Brasília. O pouso foi suave. A economia, nem tanto.'],
+  [13.5, '', 'A Primeira-Dama desembarca com catorze sacolas de compras. Duty free, claro.'],
+  [16.5, 'Primeira-Dama', '"Querido, Paris estava uma pechincha... perto do preço da picanha daqui."'],
+  [19.5, 'Assessor, correndo', '"Presidente! A inflação disparou, a dívida subiu e... a picanha sumiu!"'],
+  [23, 'Presidente', '"Sumiu? Então vamos procurar. Chamem o carro oficial."'],
+];
+
+const ease = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : 1 - Math.pow(1 - t, 3));
+const seg = (t: number, a: number, b: number) => Math.max(0, Math.min(1, (t - a) / (b - a)));
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+const tmpPos = new THREE.Vector3();
+const tmpLook = new THREE.Vector3();
+const look = new THREE.Vector3();
+
+export function IntroScene() {
+  const screen = useGame((s) => s.screen);
+  const { camera } = useThree();
+  const plane = useRef<THREE.Group>(null);
+  const pitch = useRef<THREE.Group>(null);
+  const pres = useRef<THREE.Group>(null);
+  const lady = useRef<THREE.Group>(null);
+  const aide = useRef<THREE.Group>(null);
+  const presAnim = useRef<AnimState>({ phase: 0, speed: 0 });
+  const ladyAnim = useRef<AnimState>({ phase: 0, speed: 0 });
+  const aideAnim = useRef<AnimState>({ phase: 0, speed: 0 });
+  const stairsRef = useRef(0);
+  const lineIdx = useRef(-1);
+
+  useFrame((_, dtRaw) => {
+    if (useGame.getState().screen !== 'intro') return;
+    const dt = Math.min(dtRaw, 0.05);
+    runtime.introT += dt;
+    const t = runtime.introT;
+    // legendas
+    let li = 0;
+    for (let i = 0; i < LINES.length; i++) if (t >= LINES[i][0]) li = i;
+    if (li !== lineIdx.current) {
+      lineIdx.current = li;
+      useGame.getState().set({ introLine: { speaker: LINES[li][1], text: LINES[li][2] } });
+    }
+    if (t >= INTRO_LENGTH) {
+      useGame.getState().finishIntro();
+      return;
+    }
+    // avião
+    let px: number, py: number, pp: number;
+    if (t < 6) {
+      const k = t / 6;
+      px = lerp(340, 200, k);
+      py = 34 * Math.pow(1 - k, 1.6);
+      pp = 0.05 + 0.08 * k;
+    } else {
+      const k = ease(seg(t, 6, 11.5));
+      px = lerp(200, AIRPORT.planeX, k);
+      py = 0;
+      pp = Math.max(0, 0.13 * (1 - seg(t, 6, 7.2)));
+    }
+    if (plane.current) plane.current.position.set(px, py, AIRPORT.planeZ);
+    if (pitch.current) pitch.current.rotation.x = -pp;
+    const st = seg(t, 11.5, 12.6);
+    if (Math.abs(st - stairsRef.current) > 0.05 || (st === 1 && stairsRef.current !== 1)) stairsRef.current = st;
+    // presidente: porta → escada → tapete
+    const walk = (ref: React.RefObject<THREE.Group>, anim: React.MutableRefObject<AnimState>, t0: number) => {
+      const g = ref.current;
+      if (!g) return;
+      g.visible = t > t0;
+      const a = seg(t, t0, t0 + 2.4);
+      const b = seg(t, t0 + 2.4, t0 + 4.6);
+      if (a < 1) {
+        g.position.set(141, lerp(2.6, 0, a), lerp(-173.2, -168.8, a));
+      } else {
+        g.position.set(141 + (ref === lady ? lerp(0, -2, b) : 0), 0, lerp(-168.8, ref === lady ? -164.2 : -163, b));
+      }
+      g.rotation.y = 0;
+      anim.current.speed = t > t0 && b < 1 ? 1 : 0;
+      anim.current.phase += dt * 8 * anim.current.speed;
+    };
+    walk(pres, presAnim, 12.8);
+    walk(lady, ladyAnim, 14.4);
+    // assessor correndo
+    if (aide.current) {
+      const k = seg(t, 18.6, 20.8);
+      aide.current.visible = t > 18.6;
+      aide.current.position.set(lerp(156, 142.3, k), 0, lerp(-152, -161.6, k));
+      aide.current.rotation.y = Math.atan2(142.3 - 156, -161.6 + 152);
+      aideAnim.current.speed = k > 0 && k < 1 ? 2 : 0;
+      aideAnim.current.phase += dt * 13 * aideAnim.current.speed;
+    }
+    // câmera
+    if (t < 6) {
+      tmpPos.set(212, 3.5, -152);
+      tmpLook.set(px, py + 3, AIRPORT.planeZ);
+    } else if (t < 11.5) {
+      tmpPos.set(170, 4, -156);
+      tmpLook.set(px, 3, AIRPORT.planeZ);
+    } else if (t < 18.5) {
+      tmpPos.set(146.5, 3.4, -158.5);
+      tmpLook.set(141, 2.2, -169);
+    } else {
+      tmpPos.set(146, 2.8, -156.5);
+      tmpLook.set(141.5, 1.7, -163.5);
+    }
+    const k = 1 - Math.exp(-dt * (t < 6 ? 8 : 2.5));
+    camera.position.lerp(tmpPos, k);
+    look.lerp(tmpLook, k);
+    camera.lookAt(look);
+  });
+
+  if (screen !== 'intro') return null;
+  return (
+    <group>
+      <group ref={plane} position={[340, 34, AIRPORT.planeZ]}>
+        <group rotation={[0, -Math.PI / 2, 0]}>
+          <group ref={pitch}>
+            <StairsPlane stairsRef={stairsRef} />
+          </group>
+        </group>
+      </group>
+      <group ref={pres} visible={false}>
+        <Person shirt="#1b2431" pants="#1b2431" sash tie="#8a1c2b" hair="#d4d4d4" skin="#d39a76" headScale={1.22} anim={presAnim} />
+      </group>
+      <group ref={lady} visible={false}>
+        <FirstLady anim={ladyAnim} />
+      </group>
+      <group ref={aide} visible={false}>
+        <Person shirt="#ffffff" pants="#2b2d42" tie="#1d3557" skin="#c68642" hair="#1b1b1b" anim={aideAnim} />
+      </group>
+    </group>
+  );
+}
+
+/** Avião que re-renderiza a escada quando ela aparece. */
+function StairsPlane({ stairsRef }: { stairsRef: React.MutableRefObject<number> }) {
+  const g = useRef<THREE.Group>(null);
+  const shown = useRef(false);
+  const stairsGroup = useRef<THREE.Group>(null);
+  useFrame(() => {
+    if (stairsGroup.current) {
+      const s = stairsRef.current;
+      stairsGroup.current.visible = s > 0.02;
+      stairsGroup.current.position.x = 2.1 + 2 * s;
+      shown.current = s > 0.5;
+    }
+  });
+  return (
+    <group ref={g}>
+      <Plane stairs={0} />
+      <group ref={stairsGroup} position={[2.1, 0, 9]} visible={false}>
+        <mesh position={[0, 1.3, 0]} rotation={[0, 0, -0.55]} castShadow>
+          <boxGeometry args={[4.6, 0.25, 1.4]} />
+          <meshStandardMaterial color="#e8e8e8" />
+        </mesh>
+        <mesh position={[0.2, 0.6, 0]}>
+          <boxGeometry args={[3, 1.2, 1.2]} />
+          <meshStandardMaterial color="#2f6db5" />
+        </mesh>
+      </group>
+    </group>
+  );
+}
