@@ -2,6 +2,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useRef } from 'react';
 import * as THREE from 'three';
 import { runtime } from '../game/runtime';
+import { IS_TOUCH } from '../game/device';
 import { useGame } from '../game/store';
 import { lerpAngle } from './Player';
 
@@ -33,15 +34,22 @@ export function CameraRig() {
         tx = v.x;
         tz = v.z;
         ty = 1.3;
-        if (performance.now() - runtime.cam.lastMouse > 1400 && Math.abs(v.speed) > 1) {
+        // no celular a câmera segue o carro quase de imediato; no PC, após 1,4 s sem mexer o mouse
+        const idle = performance.now() - runtime.cam.lastMouse > (IS_TOUCH ? 600 : 1400);
+        if (idle && Math.abs(v.speed) > 0.5) {
           const desired = v.speed >= 0 ? v.yaw + Math.PI : v.yaw;
-          runtime.cam.yaw = lerpAngle(runtime.cam.yaw, desired, 1 - Math.exp(-dt * 2.5));
+          runtime.cam.yaw = lerpAngle(runtime.cam.yaw, desired, 1 - Math.exp(-dt * (IS_TOUCH ? 6 : 2.5)));
           runtime.cam.pitch += (0.28 - runtime.cam.pitch) * (1 - Math.exp(-dt * 2));
         }
       } else {
         tx = runtime.player.x;
         tz = runtime.player.z;
         ty = 1.75;
+        // no celular, andando para a frente com o joystick, a câmera vai se alinhando atrás do presidente
+        const j = runtime.joy;
+        if (IS_TOUCH && j.y < -0.35 && Math.abs(j.x) < 0.5 && performance.now() - runtime.cam.lastMouse > 900) {
+          runtime.cam.yaw = lerpAngle(runtime.cam.yaw, runtime.player.yaw + Math.PI, 1 - Math.exp(-dt * 1.4));
+        }
       }
       let dist = runtime.cam.dist;
       if (v) dist += 3.5;

@@ -104,6 +104,45 @@ function EconomyPanel() {
   );
 }
 
+// ------------------------------------------------------------ Índices compactos (celular)
+const MINI: [IndKey, string][] = [
+  ['inflation', 'Inflação'],
+  ['unemployment', 'Desemprego'],
+  ['debt', 'Dívida'],
+  ['primary', 'Primário'],
+  ['taxBurden', 'Carga trib.'],
+  ['popularity', 'Popularidade'],
+  ['purchasingPower', 'Poder compra'],
+  ['services', 'Serviços'],
+  ['confidence', 'Confiança'],
+  ['picanha', 'Picanha'],
+];
+function MiniEcon() {
+  const econ = useGame((s) => s.econ);
+  const base = useGame((s) => s.trendBase);
+  const toggle = useGame((s) => s.togglePanel);
+  return (
+    <div className="mini-econ" onClick={toggle}>
+      {MINI.map(([k, label]) => {
+        const v = econ.ind[k];
+        const d = v - base[k];
+        const eps = k === 'picanha' ? 0.5 : 0.05;
+        const good = IND_META[k].better === 'up' ? d > 0 : d < 0;
+        const n = norm(k, v);
+        const val = k === 'picanha' ? `R$${v.toFixed(0)}` : IND_META[k].fmt(v);
+        return (
+          <div className="mr" key={k}>
+            <i style={{ background: n > 0.6 ? '#3ddc84' : n > 0.35 ? '#f2c230' : '#ff5c5c' }} />
+            <span className="ml">{label}</span>
+            <b>{val}</b>
+            <em className={Math.abs(d) < eps ? '' : good ? 'g' : 'b'}>{Math.abs(d) < eps ? '' : d > 0 ? '▲' : '▼'}</em>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ------------------------------------------------------------ Minimapa
 const MAP_PX = 2; // px por unidade no mapa estático
 let staticMap: HTMLCanvasElement | null = null;
@@ -358,6 +397,7 @@ export function HUD() {
     <>
       <Objective />
       <EconomyPanel />
+      <MiniEcon />
       <Minimap />
       <Notifications />
       <Prompt />

@@ -6,6 +6,7 @@ import { sfx } from '../game/sfx';
 import { useGame } from '../game/store';
 import { citizenLine } from '../missions/citizens';
 import { MISSIONS } from '../missions/data';
+import { IS_TOUCH } from '../game/device';
 import type { Step } from '../missions/types';
 import { resolveCircle } from './layout';
 import { isBlocked } from './Player';
@@ -102,7 +103,7 @@ export function GameLoop() {
           nearCar = c;
         }
       }
-      if (nearCar && !prompt) prompt = `[F] Dirigir: ${nearCar.name}`;
+      if (nearCar && !prompt) prompt = IS_TOUCH ? `Toque em “Carro” para dirigir: ${nearCar.name}` : `[F] Dirigir: ${nearCar.name}`;
       if (!prompt && Math.hypot(px - 139, pz + 164.2) < 2.6) {
         prompt = '[E] Falar com a Primeira-Dama';
         action = () => s.openDialogue('Primeira-Dama (fictícia)', FIRST_LADY[(ladyIdx++) % FIRST_LADY.length]);
@@ -127,7 +128,8 @@ export function GameLoop() {
         }
       }
     } else {
-      prompt = `[F] Sair do veículo · [Q] Trocar rádio · ${Math.round(Math.abs(v.speed) * 3.6)} km/h`;
+      const kmh = Math.round(Math.abs(v.speed) * 3.6);
+      prompt = IS_TOUCH ? `${kmh} km/h` : `[F] Sair do veículo · [Q] Trocar rádio · ${kmh} km/h`;
     }
 
     if (prompt !== s.prompt) s.set({ prompt });
