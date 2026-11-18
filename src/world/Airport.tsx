@@ -9,93 +9,168 @@ import { Person, SimplePerson, type AnimState } from './Person';
 import { useStaticObstacles } from './useObstacles';
 
 // ------------------------------------------------------------ Avião presidencial (fictício)
-/** Nariz aponta para +z local. Altura do piso da porta ≈ 2,6. */
-const Plane = forwardRef<THREE.Group, { stairs: number }>(function Plane({ stairs }, ref) {
-  const livery = useMemo(() => new THREE.MeshStandardMaterial({ color: '#f4f4f2', metalness: 0.3, roughness: 0.35 }), []);
+/** Escada com degraus e corrimãos. Topo junto à porta (x local ≈ 2,2; y ≈ 2,35), base no chão (x ≈ 6,2). */
+function Stairs() {
+  const steps = 10;
+  const x0 = 2.25,
+    x1 = 6.2,
+    y0 = 2.35;
+  const len = Math.hypot(x1 - x0, y0);
+  const ang = Math.atan2(y0, x1 - x0);
+  return (
+    <group>
+      {Array.from({ length: steps }).map((_, i) => {
+        const k = (i + 0.5) / steps;
+        return (
+          <mesh key={i} position={[x0 + (x1 - x0) * k, y0 * (1 - k) - 0.06, 0]} castShadow receiveShadow>
+            <boxGeometry args={[(x1 - x0) / steps + 0.05, 0.1, 1.3]} />
+            <meshStandardMaterial color="#d8d8d8" metalness={0.4} roughness={0.5} />
+          </mesh>
+        );
+      })}
+      {[-0.68, 0.68].map((z) => (
+        <group key={z}>
+          {/* longarina */}
+          <mesh position={[(x0 + x1) / 2, y0 / 2 - 0.15, z]} rotation={[0, 0, -ang]}>
+            <boxGeometry args={[len, 0.25, 0.08]} />
+            <meshStandardMaterial color="#9aa3ad" metalness={0.6} />
+          </mesh>
+          {/* corrimão */}
+          <mesh position={[(x0 + x1) / 2, y0 / 2 + 0.85, z]} rotation={[0, 0, -ang]}>
+            <boxGeometry args={[len, 0.06, 0.06]} />
+            <meshStandardMaterial color="#c9a227" metalness={0.7} />
+          </mesh>
+          {[0.1, 0.5, 0.9].map((k) => (
+            <mesh key={k} position={[x0 + (x1 - x0) * k, y0 * (1 - k) + 0.42, z]}>
+              <boxGeometry args={[0.05, 0.85, 0.05]} />
+              <meshStandardMaterial color="#9aa3ad" />
+            </mesh>
+          ))}
+        </group>
+      ))}
+      {/* plataforma do topo e caminhão da escada */}
+      <mesh position={[x0 - 0.05, y0 - 0.06, 0]}>
+        <boxGeometry args={[0.5, 0.1, 1.4]} />
+        <meshStandardMaterial color="#cfcfcf" />
+      </mesh>
+      <mesh position={[x1 - 0.4, 0.35, 1.3]} castShadow>
+        <boxGeometry args={[2.4, 0.7, 0.9]} />
+        <meshStandardMaterial color="#2f6db5" />
+      </mesh>
+    </group>
+  );
+}
+
+/** Nariz aponta para +z local; lado direito (+x local) tem a porta. Piso da porta ≈ 2,35. */
+const Plane = forwardRef<THREE.Group, { animate?: boolean }>(function Plane({ animate }, ref) {
+  const livery = useMemo(() => new THREE.MeshStandardMaterial({ color: '#f4f4f2', metalness: 0.25, roughness: 0.35 }), []);
+  const stairs = useRef<THREE.Group>(null);
+  const doorMat = useRef<THREE.MeshStandardMaterial>(null);
+  useFrame(() => {
+    const k = animate ? Math.max(0, Math.min(1, (runtime.introT - 11.2) / 1.4)) : 1;
+    if (stairs.current) {
+      stairs.current.visible = k > 0.01;
+      stairs.current.position.x = (1 - k) * 4;
+    }
+    if (doorMat.current) doorMat.current.color.set(!animate || runtime.introT > 11.6 ? '#0d0d0d' : '#d9d9d6');
+  });
   return (
     <group ref={ref}>
+      {/* fuselagem */}
       <group position={[0, 3.2, 0]}>
         <mesh rotation={[Math.PI / 2, 0, 0]} castShadow material={livery}>
-          <cylinderGeometry args={[2, 2, 26, 20]} />
+          <cylinderGeometry args={[2, 2, 24, 24]} />
         </mesh>
-        <mesh position={[0, 0, 13]} scale={[1, 1, 1.6]} castShadow material={livery}>
-          <sphereGeometry args={[2, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <mesh position={[0, 0, 12]} scale={[1, 1, 1.5]} castShadow material={livery}>
+          <sphereGeometry args={[2, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
         </mesh>
-        <mesh position={[0, 0.6, 14.5]} rotation={[-0.5, 0, 0]}>
-          <boxGeometry args={[1.8, 0.5, 0.8]} />
-          <meshStandardMaterial color="#1b2a3a" metalness={0.6} roughness={0.2} />
+        {/* para-brisa */}
+        <mesh position={[0, 0.75, 13.6]} rotation={[-0.75, 0, 0]}>
+          <boxGeometry args={[1.9, 0.45, 0.9]} />
+          <meshStandardMaterial color="#1b2a3a" metalness={0.7} roughness={0.15} />
         </mesh>
-        <mesh position={[0, 0.5, -15]} rotation={[-Math.PI / 2 - 0.15, 0, 0]} castShadow material={livery}>
-          <coneGeometry args={[2, 6, 20]} />
+        {/* cauda afunilada e levemente erguida */}
+        <mesh position={[0, 0.3, -15.05]} rotation={[-Math.PI / 2 - 0.08, 0, 0]} castShadow material={livery}>
+          <cylinderGeometry args={[0.55, 2, 6.6, 24]} />
         </mesh>
-        {/* faixa verde e amarela */}
+        {/* janelas e faixas */}
         {[-1, 1].map((sx) => (
-          <group key={sx}>
-            <mesh position={[sx * 2.01, -0.3, 0]} rotation={[0, (sx * Math.PI) / 2, 0]}>
-              <planeGeometry args={[27, 0.35]} />
+          <group key={sx} rotation={[0, (sx * Math.PI) / 2, 0]}>
+            <mesh position={[0, 0.55, sx * 2.005]} rotation={[0, sx > 0 ? 0 : Math.PI, 0]}>
+              <planeGeometry args={[21, 0.32]} />
+              <meshStandardMaterial color="#1b2a3a" />
+            </mesh>
+            <mesh position={[0, -0.35, sx * 2.005]} rotation={[0, sx > 0 ? 0 : Math.PI, 0]}>
+              <planeGeometry args={[24, 0.34]} />
               <meshStandardMaterial color="#1f9d55" />
             </mesh>
-            <mesh position={[sx * 2.01, -0.62, 0]} rotation={[0, (sx * Math.PI) / 2, 0]}>
-              <planeGeometry args={[27, 0.2]} />
+            <mesh position={[0, -0.66, sx * 2.005]} rotation={[0, sx > 0 ? 0 : Math.PI, 0]}>
+              <planeGeometry args={[24, 0.18]} />
               <meshStandardMaterial color="#f2c230" />
-            </mesh>
-            <mesh position={[sx * 2.01, 0.55, 0]} rotation={[0, (sx * Math.PI) / 2, 0]}>
-              <planeGeometry args={[22, 0.32]} />
-              <meshStandardMaterial color="#1b2a3a" />
             </mesh>
           </group>
         ))}
-        <Sign lines={['REPÚBLICA FICTÍCIA DO BRASIL']} w={12} h={0.9} pos={[2.03, 1.25, -2]} rot={Math.PI / 2} bg="#f4f4f2" fg="#1f2a44" emissive={0.05} res={[1024, 80]} />
-        {/* porta (lado direito do avião = +x local) */}
-        <mesh position={[2.02, -0.1, 9]} rotation={[0, Math.PI / 2, 0]}>
-          <planeGeometry args={[1.1, 2]} />
-          <meshStandardMaterial color={stairs > 0.5 ? '#101010' : '#d9d9d6'} />
+        <Sign lines={['REPÚBLICA FICTÍCIA DO BRASIL']} w={11} h={0.8} pos={[2.01, 1.25, -2]} rot={Math.PI / 2} bg="#f4f4f2" fg="#1f2a44" emissive={0.05} res={[1024, 80]} />
+        {/* porta */}
+        <mesh position={[2.01, -0.05, 8.5]} rotation={[0, Math.PI / 2, 0]}>
+          <planeGeometry args={[1.1, 1.9]} />
+          <meshStandardMaterial ref={doorMat} color="#0d0d0d" side={THREE.DoubleSide} />
         </mesh>
+        {/* deriva (leme vertical) presa na cauda */}
+        <mesh position={[0, 2.9, -16.2]} rotation={[-0.5, 0, 0]} castShadow material={livery}>
+          <boxGeometry args={[0.28, 4.6, 3]} />
+        </mesh>
+        <mesh position={[0, 3.3, -16.45]} rotation={[-0.5, 0, 0]}>
+          <boxGeometry args={[0.3, 1.2, 3]} />
+          <meshStandardMaterial color="#1f9d55" />
+        </mesh>
+        {/* estabilizadores horizontais */}
+        {[-1, 1].map((sx) => (
+          <mesh key={sx} position={[sx * 2.3, 0.75, -16.6]} rotation={[0, sx * 0.4, 0]} castShadow material={livery}>
+            <boxGeometry args={[4.4, 0.18, 1.8]} />
+          </mesh>
+        ))}
+        {/* asas baixas, enflechadas */}
+        {[-1, 1].map((sx) => (
+          <group key={sx}>
+            <mesh position={[sx * 6.6, -1.15, 0.3]} rotation={[0, sx * 0.38, sx * -0.05]} castShadow material={livery}>
+              <boxGeometry args={[10.5, 0.3, 3.6]} />
+            </mesh>
+            {/* motor sob a asa */}
+            <mesh position={[sx * 5.2, -2.05, 2.6]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+              <cylinderGeometry args={[0.7, 0.62, 3, 16]} />
+              <meshStandardMaterial color="#9aa3ad" metalness={0.6} roughness={0.3} />
+            </mesh>
+            <mesh position={[sx * 5.2, -1.5, 2.2]}>
+              <boxGeometry args={[0.2, 0.7, 1.6]} />
+              <meshStandardMaterial color="#9aa3ad" />
+            </mesh>
+          </group>
+        ))}
       </group>
-      {/* asas e cauda */}
-      <mesh position={[0, 2.3, 0]} castShadow material={livery}>
-        <boxGeometry args={[26, 0.35, 5]} />
-      </mesh>
-      {[-6, 6].map((ex) => (
-        <mesh key={ex} position={[ex, 1.6, 0.8]} rotation={[Math.PI / 2, 0, 0]} castShadow>
-          <cylinderGeometry args={[0.75, 0.75, 3.2, 14]} />
-          <meshStandardMaterial color="#9aa3ad" metalness={0.6} roughness={0.3} />
-        </mesh>
-      ))}
-      <mesh position={[0, 7.4, -15.5]} castShadow material={livery}>
-        <boxGeometry args={[0.3, 4.6, 3.6]} />
-      </mesh>
-      <mesh position={[0, 7.6, -15.5]}>
-        <boxGeometry args={[0.32, 1.4, 3.6]} />
-        <meshStandardMaterial color="#1f9d55" />
-      </mesh>
-      <mesh position={[0, 5.4, -16]} material={livery}>
-        <boxGeometry args={[9, 0.25, 2.4]} />
-      </mesh>
       {/* trem de pouso */}
       {[
-        [0, 9],
-        [-2.4, -1],
-        [2.4, -1],
-      ].map(([gx, gz], i) => (
-        <mesh key={i} position={[gx, 0.6, gz]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.6, 0.6, 0.5, 12]} />
-          <meshStandardMaterial color="#111" />
-        </mesh>
-      ))}
-      {/* escada */}
-      {stairs > 0 && (
-        <group position={[2.1 + 2 * stairs, 0, 9]}>
-          <mesh position={[0, 1.3, 0]} rotation={[0, 0, -0.55]} castShadow>
-            <boxGeometry args={[4.6, 0.25, 1.4]} />
-            <meshStandardMaterial color="#e8e8e8" />
+        [0, 10, 0.5],
+        [-2.2, -0.6, 0.6],
+        [2.2, -0.6, 0.6],
+      ].map(([gx, gz, r], i) => (
+        <group key={i}>
+          <mesh position={[gx, 1.3, gz]}>
+            <boxGeometry args={[0.15, 1.6, 0.15]} />
+            <meshStandardMaterial color="#666" />
           </mesh>
-          <mesh position={[0.2, 0.6, 0]}>
-            <boxGeometry args={[3, 1.2, 1.2]} />
-            <meshStandardMaterial color="#2f6db5" />
+          <mesh position={[gx, r, gz]} rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[r, r, 0.45, 14]} />
+            <meshStandardMaterial color="#111" />
           </mesh>
         </group>
-      )}
+      ))}
+      {/* escada encostada na porta */}
+      <group position={[0, 0, 8.5]}>
+        <group ref={stairs}>
+          <Stairs />
+        </group>
+      </group>
     </group>
   );
 });
@@ -190,7 +265,7 @@ export function Airport() {
       {screen !== 'intro' && (
         <>
           <group position={[AIRPORT.planeX, 0, AIRPORT.planeZ]} rotation={[0, -Math.PI / 2, 0]}>
-            <Plane stairs={1} />
+            <Plane />
           </group>
           <group position={[139, 0, -164.2]} rotation={[0, 0.6, 0]}>
             <FirstLady />
@@ -231,7 +306,6 @@ export function IntroScene() {
   const presAnim = useRef<AnimState>({ phase: 0, speed: 0 });
   const ladyAnim = useRef<AnimState>({ phase: 0, speed: 0 });
   const aideAnim = useRef<AnimState>({ phase: 0, speed: 0 });
-  const stairsRef = useRef(0);
   const lineIdx = useRef(-1);
 
   useFrame((_, dtRaw) => {
@@ -265,8 +339,6 @@ export function IntroScene() {
     }
     if (plane.current) plane.current.position.set(px, py, AIRPORT.planeZ);
     if (pitch.current) pitch.current.rotation.x = -pp;
-    const st = seg(t, 11.5, 12.6);
-    if (Math.abs(st - stairsRef.current) > 0.05 || (st === 1 && stairsRef.current !== 1)) stairsRef.current = st;
     // presidente: porta → escada → tapete
     const walk = (ref: React.RefObject<THREE.Group>, anim: React.MutableRefObject<AnimState>, t0: number) => {
       const g = ref.current;
@@ -275,7 +347,7 @@ export function IntroScene() {
       const a = seg(t, t0, t0 + 2.4);
       const b = seg(t, t0 + 2.4, t0 + 4.6);
       if (a < 1) {
-        g.position.set(141, lerp(2.6, 0, a), lerp(-173.2, -168.8, a));
+        g.position.set(141, lerp(2.35, 0.02, a), lerp(-172.75, -168.8, a));
       } else {
         g.position.set(141 + (ref === lady ? lerp(0, -2, b) : 0), 0, lerp(-168.8, ref === lady ? -164.2 : -163, b));
       }
@@ -283,7 +355,7 @@ export function IntroScene() {
       anim.current.speed = t > t0 && b < 1 ? 1 : 0;
       anim.current.phase += dt * 8 * anim.current.speed;
     };
-    walk(pres, presAnim, 12.8);
+    walk(pres, presAnim, 13);
     walk(lady, ladyAnim, 14.4);
     // assessor correndo
     if (aide.current) {
@@ -320,7 +392,7 @@ export function IntroScene() {
       <group ref={plane} position={[340, 34, AIRPORT.planeZ]}>
         <group rotation={[0, -Math.PI / 2, 0]}>
           <group ref={pitch}>
-            <StairsPlane stairsRef={stairsRef} />
+            <Plane animate />
           </group>
         </group>
       </group>
@@ -332,36 +404,6 @@ export function IntroScene() {
       </group>
       <group ref={aide} visible={false}>
         <Person shirt="#ffffff" pants="#2b2d42" tie="#1d3557" skin="#c68642" hair="#1b1b1b" anim={aideAnim} />
-      </group>
-    </group>
-  );
-}
-
-/** Avião que re-renderiza a escada quando ela aparece. */
-function StairsPlane({ stairsRef }: { stairsRef: React.MutableRefObject<number> }) {
-  const g = useRef<THREE.Group>(null);
-  const shown = useRef(false);
-  const stairsGroup = useRef<THREE.Group>(null);
-  useFrame(() => {
-    if (stairsGroup.current) {
-      const s = stairsRef.current;
-      stairsGroup.current.visible = s > 0.02;
-      stairsGroup.current.position.x = 2.1 + 2 * s;
-      shown.current = s > 0.5;
-    }
-  });
-  return (
-    <group ref={g}>
-      <Plane stairs={0} />
-      <group ref={stairsGroup} position={[2.1, 0, 9]} visible={false}>
-        <mesh position={[0, 1.3, 0]} rotation={[0, 0, -0.55]} castShadow>
-          <boxGeometry args={[4.6, 0.25, 1.4]} />
-          <meshStandardMaterial color="#e8e8e8" />
-        </mesh>
-        <mesh position={[0.2, 0.6, 0]}>
-          <boxGeometry args={[3, 1.2, 1.2]} />
-          <meshStandardMaterial color="#2f6db5" />
-        </mesh>
       </group>
     </group>
   );

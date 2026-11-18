@@ -116,6 +116,11 @@ export function FinalNote() {
         imposto e nos juros. Um país que premia quem empresta e pune quem produz não sai do lugar.
       </p>
       <p>
+        O mesmo vale para a Defesa: quase metade do orçamento vai para aposentadorias e pensões — incluindo pensões vitalícias herdadas —
+        enquanto a tropa trabalha com equipamento sucateado. Respeitar quem serve ao país é dar equipamento e carreira a quem está na ativa, não
+        eternizar privilégios.
+      </p>
+      <p>
         <b>O Brasil é o país do futuro que nunca chega?</b> Enquanto 7 em cada 10 alunos de 15 anos não alcançam o básico em matemática (PISA
         2022) e cerca de 90 milhões de pessoas vivem sem coleta de esgoto (Sinisa 2024), o futuro continua sendo promessa. Ele só chega quando o
         dinheiro chega de verdade à escola, ao posto de saúde e ao cano de esgoto — sem ficar pelo caminho.

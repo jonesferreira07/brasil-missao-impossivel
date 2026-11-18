@@ -36,11 +36,13 @@ Abertura: o Presidente (fictício) volta de mais uma viagem à Europa; a Primeir
 
 1 Cadê a Picanha? · 2 A Máquina de Impostos · 3 O Dinheiro Acabou · 4 Juros na Canetada ·
 5 A Greve dos Caminhoneiros · 6 Brasília em Chamas · 7 O País do Futuro · 8 A Guerra dos Preços ·
-9 O Congresso Decide · 10 O Pingue-Pongue dos Poderes · 11 O Supremo Sou Eu · 12 O Último Churrasco ·
-**13 Desafio Final: A Eleição**
+9 O Congresso Decide · 10 O Pingue-Pongue dos Poderes · 11 O Supremo Sou Eu · 12 Quartel Abandonado ·
+13 O Último Churrasco · **14 Desafio Final: A Eleição**
 
 - *O País do Futuro*: escola, UPA e periferia com esgoto a céu aberto. As placas "DADO REAL" trazem números do Brasil real
   (PISA 2022/OCDE-Inep; Sinisa 2024/Trata Brasil; SUS) — o restante é ficção.
+- *Quartel Abandonado*: equipamento sucateado, pensões vitalícias herdadas e um alto-comando que só "estuda"; placas com
+  dados reais do orçamento da Defesa (2025) e da regra das pensões de filhas.
 - *Juros na Canetada*: baixar juros por decreto sem cortar gastos dá crescimento imediato e cobra depois em inflação e juros ainda maiores.
 - *O Pingue-Pongue dos Poderes*: o presidente decide, o Congresso barra e a Corte libera — e o cidadão não sabe qual regra vale.
 - *O Supremo Sou Eu*: um ministro fictício é réu, advogado, promotor e juiz. A alavanca `institutions` mede o equilíbrio

@@ -50,6 +50,8 @@ export function CameraRig() {
       tmp.set(tx + Math.sin(yaw) * Math.cos(pitch) * dist, ty + Math.sin(pitch) * dist + 0.6, tz + Math.cos(yaw) * Math.cos(pitch) * dist);
       if (runtime.insideSuper && !v) tmp.y = Math.min(tmp.y, 7.8);
       tmp.y = Math.max(tmp.y, 0.6);
+      // evita a câmera atravessar o avião estacionado na base aérea
+      if (tmp.x > 132 && tmp.x < 168 && tmp.z > -190 && tmp.z < -160) tmp.y = Math.max(tmp.y, 6.8);
       camera.position.lerp(tmp, 1 - Math.exp(-dt * 12));
       camera.lookAt(tx, ty + 0.3, tz);
       fx = tx;

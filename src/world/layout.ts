@@ -121,6 +121,8 @@ BUILDINGS.push({ id: 'upa', x: 30, z: 135, w: 20, d: 14, h: 7, color: '#dfe7ec',
 // Barracos da periferia, à beira do esgoto a céu aberto
 for (const [bx, bz, bc] of [[-75, 205, '#a1887f'], [-61, 205.5, '#8d6e63'], [-47, 204.5, '#bcaaa4'], [-120, 205, '#a1887f'], [-134, 205.5, '#90a4ae']] as [number, number, string][])
   BUILDINGS.push({ id: `barraco${bx}`, x: bx, z: bz, w: 6, d: 5, h: 3.2, color: bc, kind: 'house', roof: '#607d8b' });
+// Quartel (missão das Forças Armadas) — fictício
+BUILDINGS.push({ id: 'quartel', x: 155, z: -28, w: 26, d: 10, h: 6, color: '#7f8c6b', kind: 'generic', label: 'QUARTEL DA GUARNIÇÃO FICTÍCIA', face: 'z+', damage: 0.6 });
 // Central de Abastecimento
 BUILDINGS.push({ id: 'ceasa', x: -135, z: -177, w: 30, d: 18, h: 8, color: '#a38d6d', kind: 'warehouse', label: 'CENTRAL DE ABASTECIMENTO', face: 'z+' });
 
@@ -209,6 +211,12 @@ box(-86, 193.5, 5, 0.4); // placa da obra
 box(-58, 194.5, 6, 0.4);
 box(-44, 127, 6, 0.4);
 box(45, 125, 6, 0.4);
+box(138, -11, 3.6, 6.4); // blindado antigo
+box(160, -11, 2.6, 7.5); // caminhão quebrado
+box(179, -13, 3, 9); // helicóptero sem hélice
+box(130, -19.2, 4.4, 0.4); // mural do orçamento
+box(172, -9, 2, 4.6); // carro de luxo
+box(186, -4, 0.4, 4.8); // placa das pensões
 // Posto: loja de conveniência
 box(POSTO.x, POSTO.z + 18, 16, 8);
 // Mundo: bordas

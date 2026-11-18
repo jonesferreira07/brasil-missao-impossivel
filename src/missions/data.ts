@@ -1324,6 +1324,137 @@ export const ELECTION_MISSION: Mission = {
   ],
 };
 
+// =========================================================
+// QUARTEL ABANDONADO — Forças Armadas (personagens fictícios; dados reais nas placas)
+export const DEFESA_MISSION: Mission = {
+  id: 'mdefesa',
+  num: 12,
+  title: 'QUARTEL ABANDONADO',
+  tagline: 'Tanque de 1970, hélice em licitação e pensão até o fim do século.',
+  briefing: [
+    'O presidente foi visitar um quartel (fictício). A tropa trabalha com equipamento sucateado, enquanto a maior parte do orçamento da Defesa vai para aposentadorias e pensões.',
+    'Nas placas "DADO REAL", os números são do Brasil de verdade. Ouça o sargento, a pensionista e o general — e decida.',
+  ],
+  locationName: 'Quartel da Guarnição Fictícia',
+  monthsAfter: 3,
+  steps: [
+    { type: 'reach', text: 'Vá ao Quartel da Guarnição Fictícia', target: P.quartelFront, radius: 9 },
+    {
+      type: 'talk',
+      text: 'Converse com o Sargento Pereira',
+      target: P.sargento,
+      npc: 'sargento',
+      speaker: 'Sargento Pereira (fictício)',
+      lines: () => [
+        'Presidente, aquele blindado é de 1970. A peça de reposição a gente pega no ferro-velho.',
+        'O caminhão quebrou em 2014. O helicóptero está sem hélice: está "em licitação".',
+        'E o meu soldo não é alto, não. O dinheiro não chega aqui embaixo.',
+        'Dado real: em 2025, inativos e pensões militares consumiram cerca de 47% do orçamento da Defesa. Para equipamento sobra pouco.',
+      ],
+      label: 'Conversar com o Sargento',
+    },
+    {
+      type: 'talk',
+      text: 'Conheça Dona Vitalícia, pensionista',
+      target: P.herdeira,
+      npc: 'herdeira',
+      speaker: 'Dona Vitalícia, 68 anos, filha de general (fictícia)',
+      lines: () => [
+        'Bom dia, presidente! Vim só buscar uma documentação. Estacionei ali o carro novo.',
+        'Recebo a pensão do papai desde os 21. Casar no papel? Jamais! Perderia o benefício.',
+        'Dado real: a pensão vitalícia para filhas foi extinta em 2001 para quem entrou depois — mas segue valendo para quem já estava na carreira até 2000, e pode durar décadas.',
+        'Equipamento velho? Ah, isso eu não sei. Eu nunca venho aqui.',
+      ],
+      label: 'Conversar com Dona Vitalícia',
+    },
+    {
+      type: 'talk',
+      text: 'Fale com o General Estático',
+      target: P.general,
+      npc: 'general',
+      speaker: 'General Estático (fictício)',
+      lines: () => [
+        'Presidente. Estamos estudando a modernização da carreira.',
+        'O estudo começou em 1998. Está na fase de formação de um grupo de trabalho para avaliar a criação de uma comissão.',
+        'Mexer nos benefícios? Temos que ter cautela. Mexer no equipamento? Também. Mexer em qualquer coisa? Cautela.',
+        'Enquanto isso, o país muda lá fora — e aqui dentro tudo continua exatamente igual.',
+      ],
+      label: 'Falar com o General',
+    },
+    { type: 'decide', text: 'Decida diante do mural do orçamento da Defesa', target: P.muralDefesa, radius: 4, label: 'Ler o mural do orçamento' },
+  ],
+  question: 'Tropa com equipamento sucateado e benefícios intocáveis. O que o presidente faz?',
+  options: [
+    {
+      id: 'A',
+      title: 'Não mexer com os militares',
+      desc: 'Deixar tudo exatamente como está. Ninguém reclama, nada melhora.',
+      hint: 'Sem conflito · Equipamento continua sucateado · Credibilidade ↓',
+      resolve: () => ({
+        delta: { lev: { credibility: -2 } },
+        delayed: [later(6, 'Sucateamento', { lev: { efficiency: -0.4 } }, 'Mais um blindado foi para o ferro-velho. A pensão de Dona Vitalícia foi reajustada.')],
+        messages: ['O General Estático aprovou. Ele aprova tudo que não muda nada.'],
+        headline: 'GOVERNO DECIDE NÃO DECIDIR SOBRE AS FORÇAS ARMADAS',
+      }),
+    },
+    {
+      id: 'B',
+      title: 'Cortar equipamento e treinamento',
+      desc: 'Para fechar a conta sem mexer em benefícios, corta o que sobrou: combustível, munição de treino e manutenção.',
+      hint: 'Gasto ↓ leve · Tropa ainda mais sucateada · Benefícios intactos',
+      resolve: () => ({
+        delta: { ind: { popularity: -1 }, lev: { spending: -0.2, efficiency: -0.8, credibility: -1 } },
+        messages: ['O blindado de 1970 agora vai completar 70 anos. Sem combustível para a festa.'],
+        headline: 'CORTE ATINGE TREINO E MANUTENÇÃO; PENSÕES SEGUEM INTACTAS',
+      }),
+    },
+    {
+      id: 'C',
+      title: 'Reformar a proteção social militar',
+      desc: 'Com o Congresso: teto real para pensões, fim de acúmulos e de privilégios residuais, regras de transição e respeito ao direito adquirido. A economia vai para equipamento e para a tropa.',
+      hint: 'Gasto ↓ · Eficiência ↑ · Resistência no topo · Depende de apoio político',
+      resolve: (e) =>
+        e.ind.popularity >= 35
+          ? {
+              delta: { ind: { popularity: 2 }, lev: { spending: -0.4, efficiency: 1.2, credibility: 4 } },
+              delayed: [later(8, 'Tropa equipada', { lev: { growthBoost: 0.3 } }, 'Chegaram peças, combustível e novos equipamentos. O Sargento Pereira tirou a foto do ano.')],
+              messages: ['Reforma aprovada: menos privilégio no topo, mais equipamento na base.', 'Dona Vitalícia mantém o que já recebia — mas acúmulos e excessos acabaram.'],
+              headline: 'REFORMA MILITAR CORTA PRIVILÉGIOS E REFORÇA EQUIPAMENTO DA TROPA',
+            }
+          : {
+              delta: { lev: { spending: -0.15, efficiency: 0.5, credibility: 1 } },
+              messages: ['Com pouca popularidade, a reforma passou pela metade. Algum avanço, muita resistência.'],
+              headline: 'REFORMA MILITAR AVANÇA, MAS DESIDRATADA',
+            },
+    },
+    {
+      id: 'D',
+      title: 'Aumentar o orçamento da Defesa sem reformar',
+      desc: 'Mais dinheiro para a Defesa, sem mudar a distribuição.',
+      hint: 'Gasto ↑ · A maior parte continua indo para inativos e pensões',
+      resolve: () => ({
+        delta: { lev: { spending: 0.6, credibility: -2 } },
+        messages: ['Mais dinheiro, mesma proporção: o blindado ganhou uma pintura nova. Só a pintura.'],
+        headline: 'DEFESA GANHA MAIS VERBA; EQUIPAMENTO CONTINUA NO FERRO-VELHO',
+      }),
+    },
+    {
+      id: 'E',
+      title: 'Plano de modernização com metas',
+      desc: 'Mais militares temporários, investimento em tecnologia e indústria de defesa, metas públicas e teto de pensões para os próximos anos.',
+      hint: 'Gasto ↓ leve · Eficiência ↑ · Resultados graduais',
+      resolve: () => ({
+        delta: { lev: { spending: -0.2, efficiency: 1, credibility: 3 } },
+        delayed: [later(9, 'Modernização', { lev: { growthBoost: 0.4 } }, 'A indústria de defesa contratou engenheiros e a tropa recebeu equipamento novo.')],
+        messages: ['O General Estático pediu um grupo de trabalho. Desta vez, com prazo.'],
+        headline: 'PLANO DE MODERNIZAÇÃO DAS FORÇAS ARMADAS TERÁ METAS PÚBLICAS',
+      }),
+    },
+  ],
+};
+
+MISSIONS.splice(MISSIONS.findIndex((m) => m.id === 'msup') + 1, 0, DEFESA_MISSION);
+
 MISSIONS.push(ELECTION_MISSION);
 MISSIONS.forEach((m, i) => (m.num = i + 1));
 export const ELECTION_INDEX = MISSIONS.length - 1;

@@ -45,5 +45,10 @@ export const P = {
   periferia: [-75, 195] as [number, number],
   morador: [-68, 196] as [number, number],
   placaObra: [-86, 195] as [number, number],
+  quartelFront: [150, -14] as [number, number],
+  sargento: [146, -17.5] as [number, number],
+  herdeira: [168, -9] as [number, number],
+  general: [156, -21] as [number, number],
+  muralDefesa: [130, -18] as [number, number],
   urna: [0, 80] as [number, number],
 };

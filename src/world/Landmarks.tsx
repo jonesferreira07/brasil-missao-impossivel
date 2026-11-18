@@ -8,6 +8,7 @@ import { MISSIONS } from '../missions/data';
 import { textTexture } from '../game/textures';
 import { useHealth } from './City';
 import { Person } from './Person';
+import { Car } from './Car';
 import { CONGRESS, PLANALTO, POSTO, SUPREMO } from './layout';
 
 interface SignProps {
@@ -605,6 +606,94 @@ function Realidade() {
   );
 }
 
+/** Pátio do quartel: equipamento sucateado, mural do orçamento e carro de luxo da pensionista. */
+function Quartel() {
+  const rust = '#6b4f2a';
+  return (
+    <group>
+      {/* blindado antigo sobre tijolos */}
+      <group position={[138, 0, -11]}>
+        <mesh position={[0, 1.2, 0]} castShadow>
+          <boxGeometry args={[3.2, 1.2, 6]} />
+          <meshStandardMaterial color="#5a5a3c" roughness={1} />
+        </mesh>
+        <mesh position={[0, 2.2, -0.4]} castShadow>
+          <boxGeometry args={[2, 0.8, 2.4]} />
+          <meshStandardMaterial color={rust} roughness={1} />
+        </mesh>
+        <mesh position={[0, 2.25, 1.8]} rotation={[Math.PI / 2 + 0.25, 0, 0]}>
+          <cylinderGeometry args={[0.12, 0.12, 3, 8]} />
+          <meshStandardMaterial color={rust} />
+        </mesh>
+        {[-1.2, 1.2].map((x) =>
+          [-2.2, 0, 2.2].map((z) => (
+            <mesh key={`${x}${z}`} position={[x, 0.3, z]}>
+              <boxGeometry args={[0.6, 0.6, 0.9]} />
+              <meshStandardMaterial color="#9c4a32" />
+            </mesh>
+          )),
+        )}
+        <Sign lines={['BLINDADO DE 1970', 'peças: ferro-velho do Zé']} w={2.6} h={0.7} pos={[0, 1.9, 3.06]} bg="#fff" fg="#7a1f1f" emissive={0.2} res={[512, 140]} />
+      </group>
+      {/* caminhão quebrado */}
+      <group position={[160, 0, -11]} rotation={[0, 0, 0.06]}>
+        <Car color="#4b5320" kind="truck" />
+        <Sign lines={['QUEBRADO', 'aguardando orçamento desde 2014']} w={2.4} h={0.7} pos={[0, 2, 4.3]} bg="#ffd166" fg="#111" emissive={0.2} res={[512, 140]} />
+      </group>
+      {/* helicóptero sem hélice */}
+      <group position={[179, 0, -13]}>
+        <mesh position={[0, 1.6, 1]} scale={[1, 1, 1.5]} castShadow>
+          <sphereGeometry args={[1.5, 16, 12]} />
+          <meshStandardMaterial color="#4b5320" />
+        </mesh>
+        <mesh position={[0, 1.8, -2.6]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+          <cylinderGeometry args={[0.25, 0.5, 4, 8]} />
+          <meshStandardMaterial color="#4b5320" />
+        </mesh>
+        <mesh position={[0, 3.2, 1]}>
+          <cylinderGeometry args={[0.15, 0.15, 0.4, 8]} />
+          <meshStandardMaterial color="#333" />
+        </mesh>
+        {[-0.9, 0.9].map((x) => (
+          <mesh key={x} position={[x, 0.12, 1]}>
+            <boxGeometry args={[0.12, 0.12, 3.4]} />
+            <meshStandardMaterial color="#333" />
+          </mesh>
+        ))}
+        <Sign lines={['HÉLICE: EM LICITAÇÃO']} w={2.6} h={0.5} pos={[0, 1.4, 3.3]} bg="#fff" fg="#111" emissive={0.2} res={[512, 100]} />
+      </group>
+      {/* carro de luxo da pensionista */}
+      <group position={[172, 0, -9]}>
+        <Car color="#f4f1ea" kind="sedan" />
+      </group>
+      {/* mural do orçamento (dados reais) */}
+      <Sign
+        lines={['DADO REAL — DEFESA (2025)', 'Inativos e pensões: ~R$ 56 bi (~47% do orçamento)', 'Investimento em equipamento abaixo dos 20% da OTAN']}
+        w={4.2}
+        h={1.9}
+        pos={[130, 2.1, -19.2]}
+        bg="#0b1d2e"
+        fg="#fff"
+        emissive={0.35}
+        mount="posts"
+        res={[1024, 460]}
+      />
+      <Sign
+        lines={['DADO REAL — PENSÃO DE FILHAS', 'Extinta em 2001 para novos militares, mantida', 'para quem estava na carreira até 2000 (~R$ 6 bi/ano, estimativa)']}
+        w={4.8}
+        h={1.9}
+        pos={[186, 2.1, -4]}
+        rot={-Math.PI / 2}
+        bg="#0b1d2e"
+        fg="#fff"
+        emissive={0.35}
+        mount="posts"
+        res={[1024, 400]}
+      />
+    </group>
+  );
+}
+
 /** Palco do comício no bairro (Missão 9). */
 function Comicio() {
   const [x, z] = P.comicio;
@@ -674,6 +763,7 @@ export function Landmarks() {
       <CanetaGigante />
       <Impostometro />
       <Realidade />
+      <Quartel />
       <Urna />
       <Plenario />
       <Estoque />

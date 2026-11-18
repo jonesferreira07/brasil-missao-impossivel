@@ -99,7 +99,7 @@ export function HowToPlay() {
       <div className="panel howto" style={{ maxWidth: 820 }}>
         <h3>Como jogar</h3>
         <p>
-          Você é o Presidente de um Brasil fictício em crise. Explore Brasília, converse com a população e complete as 13 missões (a última é a eleição). Cada decisão mexe nos
+          Você é o Presidente de um Brasil fictício em crise. Explore Brasília, converse com a população e complete as 14 missões (a última é a eleição). Cada decisão mexe nos
           indicadores do painel econômico — alguns efeitos são imediatos, outros chegam meses depois. Não existe opção que funcione sempre: o resultado
           depende do contexto.
         </p>
